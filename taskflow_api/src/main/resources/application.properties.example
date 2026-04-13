@@ -1,0 +1,11 @@
+spring.application.name=taskflow_api
+# Conexion a PostgreSQL
+spring.datasource.url=jdbc:postgresql://localhost:5432/your_db
+spring.datasource.username=your_user
+spring.datasource.password=your_password
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# JPA e Hibernate
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.show-sql=true
+spring.jpa.format-sql=true
