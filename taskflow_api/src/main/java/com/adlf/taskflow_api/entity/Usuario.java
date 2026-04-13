@@ -84,12 +84,12 @@ public class Usuario {
         this.tareasUsuario = tareasUsuario;
     }
 
-    public void addTarea(Tarea tarea){
+    public void addTarea(Tarea tarea) {
         this.tareasUsuario.add(tarea);
         tarea.setUsuario(this);
     }
 
-    public void removeTarea(Tarea tarea){
+    public void removeTarea(Tarea tarea) {
         this.tareasUsuario.remove(tarea);
         tarea.setUsuario(null);
     }
