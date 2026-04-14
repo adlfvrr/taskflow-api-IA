@@ -1,5 +1,8 @@
 package com.adlf.taskflow_api.service;
 
+import com.adlf.taskflow_api.dto.UsuarioMapper;
+import com.adlf.taskflow_api.dto.UsuarioRequestDTO;
+import com.adlf.taskflow_api.dto.UsuarioResponseDTO;
 import com.adlf.taskflow_api.entity.Usuario;
 import com.adlf.taskflow_api.exceptions.*;
 import com.adlf.taskflow_api.repository.UsuarioRepository;
@@ -8,11 +11,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Validated
 public class UsuarioService {
-
 
     private UsuarioRepository usuarioRepository;
 
@@ -20,66 +23,65 @@ public class UsuarioService {
         this.usuarioRepository = usuarioRepository;
     }
 
-    public Usuario crearUsuario(Usuario usuario) {
-        if(existsByEmail(usuario.getEmail())){
-            throw new UsuarioExistenteException(usuario.getEmail());
+    public UsuarioResponseDTO crearUsuario(UsuarioRequestDTO dto) {
+        if (existsByEmail(dto.getEmail())) {
+            throw new UsuarioExistenteException(dto.getEmail());
         }
-        usuarioRepository.save(usuario);
-        return usuario;
+        Usuario entity = UsuarioMapper.toEntity(dto);
+        return UsuarioMapper.toResponseDTO(usuarioRepository.save(entity));
     }
 
-    public List<Usuario> listarTodos() {
-        return usuarioRepository.findAll();
+    public List<UsuarioResponseDTO> listarTodos() {
+        return usuarioRepository.findAll().stream()
+                .map(UsuarioMapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public Usuario buscarPorId(Long id) {
+    public UsuarioResponseDTO buscarPorId(Long id) {
         if (id <= 0 || id == null) {
             throw new IdIncorrectaException();
         }
-        return usuarioRepository.findById(id).orElseThrow(() -> new UsuarioByIdNotFoundException(id));
+
+        return UsuarioMapper.toResponseDTO(usuarioRepository.findById(id).orElseThrow(() -> new UsuarioByIdNotFoundException(id)));
     }
 
-    public boolean actualizarUsuario(Long id, Usuario usuarioActualizado) {
-        if(id <= 0 || id == null){
+    public UsuarioResponseDTO actualizarUsuario(Long id, UsuarioRequestDTO dto) {
+        if (id <= 0 || id == null) {
             throw new IdIncorrectaException();
         }
-        Usuario u = buscarPorId(id);
-        if(usuarioActualizado.getNombre() != null){
-            u.setNombre(usuarioActualizado.getNombre());
+        Usuario u = usuarioRepository.findById(id).orElseThrow(() -> new UsuarioByIdNotFoundException(id));
+        if (dto.getNombre() != null) {
+            u.setNombre(dto.getNombre());
         }
-        if(usuarioActualizado.getPassword() != null){
-            u.setPassword(usuarioActualizado.getPassword());
+        if (dto.getPassword() != null) {
+            u.setPassword(dto.getPassword());
         }
-        if(usuarioActualizado.getEmail() != null){
-            if(existsByEmail(usuarioActualizado.getEmail())){
-                throw new UsuarioExistenteException(usuarioActualizado.getEmail());
+        if (dto.getEmail() != null) {
+            if (existsByEmail(dto.getEmail())) {
+                throw new UsuarioExistenteException(dto.getEmail());
             }
-            u.setEmail(usuarioActualizado.getEmail());
+            u.setEmail(dto.getEmail());
         }
-        if(usuarioActualizado.getTareasUsuario() != null){
-            u.setTareasUsuario(usuarioActualizado.getTareasUsuario());
-        }
-        usuarioRepository.save(u);
-        return true;
+        return UsuarioMapper.toResponseDTO(usuarioRepository.save(u));
     }
 
-    public boolean eliminarUsuario(Long id, boolean forzar) {
+    public void eliminarUsuario(Long id, boolean forzar) {
         if (id <= 0 || id == null) {
             throw new IdIncorrectaException();
         }
-        if (!forzar && !buscarPorId(id).getTareasUsuario().isEmpty()) {
+        Usuario u = usuarioRepository.findById(id).orElseThrow(() -> new UsuarioByIdNotFoundException(id));
+        if (!forzar && !u.getTareasUsuario().isEmpty()) {
             throw new TareasIncompletasException();
         }
 
         usuarioRepository.deleteById(id);
-        return true;
     }
 
-    public Usuario findByEmail(String email) {
+    public UsuarioResponseDTO findByEmail(String email) {
         if (email.isEmpty() || email.isBlank()) {
             throw new EmailIncorrectoException();
         }
-        return usuarioRepository.findByEmail(email).orElseThrow(() -> new UsuarioByEmailNotFoundException(email));
+        return UsuarioMapper.toResponseDTO(usuarioRepository.findByEmail(email).orElseThrow(() -> new UsuarioByEmailNotFoundException(email)));
     }
 
     public boolean existsByEmail(String email) {
@@ -87,6 +89,10 @@ public class UsuarioService {
             throw new EmailIncorrectoException();
         }
         return usuarioRepository.existsByEmail(email);
+    }
+
+    public Usuario buscarEntityPorId(Long id){
+        return usuarioRepository.findById(id).orElseThrow(() -> new UsuarioByIdNotFoundException(id));
     }
 
 }

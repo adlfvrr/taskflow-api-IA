@@ -1,5 +1,9 @@
 package com.adlf.taskflow_api.service;
 
+import com.adlf.taskflow_api.dto.TareaMapper;
+import com.adlf.taskflow_api.dto.TareaRequestDTO;
+import com.adlf.taskflow_api.dto.TareaResponseDTO;
+import com.adlf.taskflow_api.entity.Estado;
 import com.adlf.taskflow_api.entity.Tarea;
 import com.adlf.taskflow_api.entity.Usuario;
 import com.adlf.taskflow_api.exceptions.IdIncorrectaException;
@@ -10,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Validated
@@ -24,64 +29,76 @@ public class TareaService {
     }
 
     //Creamos una tarea y la asignamos al usuario
-    public Tarea crearTarea(Tarea tarea, Long idUsuario) {
+    public TareaResponseDTO crearTarea(TareaRequestDTO dto, Long idUsuario) {
 
         if (idUsuario <= 0 || idUsuario == null) {
             throw new IdIncorrectaException();
         }
+        Tarea t = TareaMapper.toEntity(dto);
         //Asignamos la tarea al usuario mediante su respectivo service
-        this.usuarioService.buscarPorId(idUsuario).addTarea(tarea);
+        this.usuarioService.buscarEntityPorId(idUsuario).addTarea(t);
         /*
         Una manera más limpia sería
         Usuario u = this.usuarioService.buscarPorId(idUsuario);
         u.addTarea(tarea);
          */
-        tareaRepository.save(tarea);
-        return tarea;
+        return TareaMapper.toResponseDTO(tareaRepository.save(t));
     }
 
-    public List<Tarea> listarTodas() {
+    public List<TareaResponseDTO> listarTodas() {
 
-        return tareaRepository.findAll();
+        return tareaRepository.findAll().stream()
+                .map(TareaMapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public Tarea buscarPorId(Long id) {
+    public TareaResponseDTO buscarPorId(Long id) {
         if (id <= 0 || id == null) {
             throw new IdIncorrectaException();
         }
 
-        return tareaRepository.findById(id).orElseThrow(() -> new TareaByIdNotFoundException(id));
+        return TareaMapper.toResponseDTO(tareaRepository.findById(id).orElseThrow(() -> new TareaByIdNotFoundException(id)));
     }
 
-    public List<Tarea> listarPorUsuario(Long idUsuario) {
-        return usuarioService.buscarPorId(idUsuario).getTareasUsuario();
+    public List<TareaResponseDTO> listarPorUsuario(Long idUsuario) {
+        List<Tarea> tareasUsuario = tareaRepository.findByUsuarioId(idUsuario);
+        return tareasUsuario.stream()
+                .map(TareaMapper::toResponseDTO)
+                .collect(Collectors.toList());
 
     }
 
-    public boolean actualizarTarea(Tarea tareaActualizada, Long id) {
-        Tarea t = buscarPorId(id);
-        if (tareaActualizada.getTitulo() != null) {
-            t.setTitulo(tareaActualizada.getTitulo());
+    public TareaResponseDTO actualizarTarea(TareaRequestDTO dto, Long id) {
+        Tarea t = tareaRepository.findById(id).orElseThrow(() -> new TareaByIdNotFoundException(id));
+        if (dto.getTitulo() != null) {
+            t.setTitulo(dto.getTitulo());
         }
-        if (tareaActualizada.getDescripcion() != null) {
-            t.setDescripcion(tareaActualizada.getDescripcion());
+        if (dto.getDescripcion() != null) {
+            t.setDescripcion(dto.getDescripcion());
         }
-        if (tareaActualizada.getEstado() != null) {
-            t.setEstado(tareaActualizada.getEstado());
+        if (dto.getEstado() != null) {
+            t.setEstado(dto.getEstado());
         }
-        if (tareaActualizada.getFechaVencimiento() != null) {
-            t.setFechaVencimiento(tareaActualizada.getFechaVencimiento());
+        if (dto.getFechaVencimiento() != null) {
+            t.setFechaVencimiento(dto.getFechaVencimiento());
         }
 
-        tareaRepository.save(t);
-        return true;
+        return TareaMapper.toResponseDTO(tareaRepository.save(t));
     }
 
-    public boolean eliminarTarea(Long id) {
+    public void eliminarTarea(Long id) {
         if (id <= 0 || id == null) {
-            tareaRepository.delete(buscarPorId(id));
+            throw new IdIncorrectaException();
         }
-        return true;
+            tareaRepository.deleteById(id);
     }
+
+    public List<TareaResponseDTO> listarPorEstado(Estado estado){
+        List<Tarea> tareasEstado = tareaRepository.findByEstado(estado);
+        return tareasEstado.stream()
+                .map(TareaMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
 
 }

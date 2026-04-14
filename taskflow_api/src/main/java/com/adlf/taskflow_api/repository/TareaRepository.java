@@ -10,7 +10,7 @@ import java.util.List;
 @Repository
 public interface TareaRepository extends JpaRepository<Tarea, Long> {
 
-    List<Tarea> findByUsuario(Long usuarioId);
+    List<Tarea> findByUsuarioId(Long usuarioId);
 
     List<Tarea> findByEstado(Estado estado);
 
