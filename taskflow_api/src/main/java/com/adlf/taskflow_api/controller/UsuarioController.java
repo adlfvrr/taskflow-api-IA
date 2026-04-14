@@ -3,6 +3,8 @@ package com.adlf.taskflow_api.controller;
 import com.adlf.taskflow_api.dto.UsuarioRequestDTO;
 import com.adlf.taskflow_api.dto.UsuarioResponseDTO;
 import com.adlf.taskflow_api.service.UsuarioService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,29 +20,30 @@ public class UsuarioController {
     }
 
     @GetMapping
-    public List<UsuarioResponseDTO> obtenerTodos() {
-        return usuarioService.listarTodos();
+    public ResponseEntity<List<UsuarioResponseDTO>> obtenerTodos() {
+        return ResponseEntity.ok(usuarioService.listarTodos());
     }
 
     @GetMapping("/{id}")
-    public UsuarioResponseDTO obtenerPorId(@PathVariable Long id) {
-        return usuarioService.buscarPorId(id);
+    public ResponseEntity<UsuarioResponseDTO> obtenerPorId(@PathVariable Long id) {
+        return ResponseEntity.ok(usuarioService.buscarPorId(id));
     }
 
     @PostMapping
-    public UsuarioResponseDTO agregar(@RequestBody UsuarioRequestDTO dto) {
-        return usuarioService.crearUsuario(dto);
+    public ResponseEntity<UsuarioResponseDTO> agregar(@RequestBody UsuarioRequestDTO dto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.crearUsuario(dto));
     }
 
     @PutMapping("/{id}")
-    public UsuarioResponseDTO actualizarPorId(@PathVariable Long id, @RequestBody UsuarioRequestDTO dto) {
-        return usuarioService.actualizarUsuario(id, dto);
+    public ResponseEntity<UsuarioResponseDTO> actualizarPorId(@PathVariable Long id, @RequestBody UsuarioRequestDTO dto) {
+        return ResponseEntity.ok(usuarioService.actualizarUsuario(id, dto));
     }
 
     @DeleteMapping("/{id}")
-    public void eliminar(@PathVariable Long id,
-                         @RequestParam(required = false, defaultValue = "false") boolean forzar) {
+    public ResponseEntity<Void> eliminar(@PathVariable Long id,
+                                         @RequestParam(required = false, defaultValue = "false") boolean forzar) {
         usuarioService.eliminarUsuario(id, forzar);
+        return ResponseEntity.noContent().build();
     }
 
 

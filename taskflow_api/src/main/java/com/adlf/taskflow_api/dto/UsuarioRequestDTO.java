@@ -17,7 +17,7 @@ public class UsuarioRequestDTO {
     private String email;
 
     @NotBlank
-    @Size(min = 8)
+    @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
     private String password;
 
     public UsuarioRequestDTO() {
